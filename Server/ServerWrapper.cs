@@ -5,7 +5,7 @@ using System.Net.Sockets;
 using System.Threading.Tasks;
 using System.Text;
 
-namespace ServerSide
+namespace Server
 {
     /// <summary>
     /// Add Nick maybe?
@@ -15,14 +15,13 @@ namespace ServerSide
         public const int SEND_PORT = 11000;
         public const int REC_PORT =60000;
         public const string LISTEN_IP = "10.100.102.8";
-        private bool STOP_ALL = false;
 
         public IPAddress Addr = IPAddress.Parse(LISTEN_IP);
-        public List<IPAddress> ConnectedIps { get; set; }
+        public List<User> ConnectedUsers { get; }
 
         public ServerWrapper()
         {
-            ConnectedIps = new List<IPAddress>();
+            ConnectedUsers = new List<User>();
         }
 
         public void Start()
@@ -59,13 +58,35 @@ namespace ServerSide
                         if (Data.IndexOf("<EOT>") > -1)
                             break;
                     }
+                    s.Close();
 
                     Console.WriteLine($"Text recieved {Data}");
 
-                    // Echo message back
-                    byte[] msg = Encoding.ASCII.GetBytes($"Echoing:{Data}");
-                    handle.Send(msg);
+                    // HANDLE QUIT REQUEST
+                    if (Data == "<JRQ><EOT>")
+                    {
+                        Console.WriteLine($"Accepted join request from {handle.RemoteEndPoint.ToString()}");
+                        Console.WriteLine($"Adding {handle.RemoteEndPoint.ToString()}");
+                        ConnectedUsers.Add(new User(handle.RemoteEndPoint));
+                    }
+                    else if (Data == "<QRP><EOT>")
+                    {
+                        Console.WriteLine($"Accepted quit request from {handle.RemoteEndPoint.ToString()}");
+                        Console.WriteLine($"Deleting {handle.RemoteEndPoint.ToString()} from IP List.");
+                        //ConnectedUsers.Remove(ConnectedUsers.Find(x => x.EP.ToString() == x.));
+                    }
+                    else if (Data.StartsWith("<NCR>"))
+                    {
 
+                    }
+                    else
+                    {
+
+                        // Echo message back
+                        Console.WriteLine($"Echoing\n{handle.RemoteEndPoint.ToString()}:{ Data.Substring(0, Data.Length - 5)}");
+                        byte[] msg = Encoding.ASCII.GetBytes($"{handle.RemoteEndPoint.ToString()}:{Data.Substring(0,Data.Length - 5)}");
+                        handle.Send(msg);
+                    }
                     // Shut down socket
                     handle.Shutdown(SocketShutdown.Both);
                     handle.Close();
@@ -80,11 +101,6 @@ namespace ServerSide
                     break;
                 }
             }
-        }
-
-        public void Send()
-        {
-            
         }
     }
 }

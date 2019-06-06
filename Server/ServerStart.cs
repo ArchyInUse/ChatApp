@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ServerSide
+namespace Server
 {
     class Program
     {
