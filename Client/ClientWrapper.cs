@@ -133,10 +133,9 @@ namespace Client
 
         private void Listen()
         {
-            while(true)
+            while (true)
             {
                 Socket socket = new Socket(addr.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-
                 socket.Bind(new IPEndPoint(LocalAddr, ListenPort));
                 socket.Listen(100);
 
@@ -158,6 +157,8 @@ namespace Client
 
                 handle.Shutdown(SocketShutdown.Both);
                 handle.Close();
+                socket.Shutdown(SocketShutdown.Both);
+                socket.Close();
             }
         }
     }

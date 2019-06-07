@@ -108,14 +108,16 @@ namespace Server
 
         public void SendMessage(string message, IPEndPoint except)
         {
-            Socket socket = new Socket(Addr.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             foreach(User user in ConnectedUsers)
             {
+                Socket socket = new Socket(Addr.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                 IPEndPoint CustomEndPoint = new IPEndPoint(user.EP.Address, SEND_PORT);
                 //if (user != except)
                 //{
                     socket.Connect(CustomEndPoint);
                     socket.Send(Encoding.ASCII.GetBytes(message));
+                    socket.Shutdown(SocketShutdown.Both);
+                    socket.Close();
                 //}
             }
         }
