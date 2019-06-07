@@ -41,8 +41,8 @@ namespace Server
             while (true) {
                 Socket s = new Socket(Addr.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
-                try
-                {
+                //try
+                //{
                     s.Bind(EP);
                     s.Listen(10);
 
@@ -93,16 +93,16 @@ namespace Server
                     // Shut down socket
                     handle.Shutdown(SocketShutdown.Both);
                     handle.Close();
-                }
-                catch (Exception e)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine(e.Message);
-                    Console.ResetColor();
-
-                    Console.WriteLine("Quitting...");
-                    break;
-                }
+                //}
+                //catch (Exception e)
+                //{
+                //    Console.ForegroundColor = ConsoleColor.Red;
+                //    Console.WriteLine(e.Message);
+                //    Console.ResetColor();
+                //
+                //    Console.WriteLine("Quitting...");
+                //    break;
+                //}
             }
         }
 

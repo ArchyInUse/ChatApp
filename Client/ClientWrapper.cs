@@ -138,7 +138,7 @@ namespace Client
                 Socket socket = new Socket(addr.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
                 socket.Bind(new IPEndPoint(LocalAddr, ListenPort));
-                socket.Listen(1);
+                socket.Listen(100);
 
                 Socket handle = socket.Accept();
                 socket.Close();
