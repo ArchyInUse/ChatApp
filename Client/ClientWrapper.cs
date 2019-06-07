@@ -140,7 +140,6 @@ namespace Client
                 socket.Listen(100);
 
                 Socket handle = socket.Accept();
-                socket.Close();
 
                 string Data = string.Empty;
                 byte[] buffer = new byte[1024];
