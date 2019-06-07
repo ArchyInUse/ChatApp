@@ -18,5 +18,23 @@ namespace Server
             EP = ep;
             Name = name;
         }
+
+        public static bool operator==(User user1, User user2)
+        {
+            if(user1.EP.ToString() == user2.EP.ToString())
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public static bool operator !=(User user1, User user2)
+        {
+            if (user1.EP.ToString() != user2.EP.ToString())
+            {
+                return true;
+            }
+            return false;
+        }
     }
 }

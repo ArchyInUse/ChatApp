@@ -12,12 +12,12 @@ namespace Server
     /// </summary>
     class ServerWrapper
     {
-        public const int SEND_PORT = 11000;
-        public const int REC_PORT =60000;
+        public const int SEND_PORT = 61000;
+        public const int REC_PORT = 60000;
         public const string LISTEN_IP = "10.100.102.8";
 
-        public IPAddress Addr = IPAddress.Parse(LISTEN_IP);
-        public List<User> ConnectedUsers { get; }
+        private IPAddress Addr = IPAddress.Parse(LISTEN_IP);
+        private List<User> ConnectedUsers { get; }
 
         public ServerWrapper()
         {
@@ -49,6 +49,8 @@ namespace Server
                     Console.WriteLine("Listening for connection...");
                     Data = null;
                     Socket handle = s.Accept();
+                    // have to close socket so that there isn't 2 sockets (causing an exception)
+                    s.Close();
 
                     // Listen for Connection
                     while(true)
@@ -65,23 +67,26 @@ namespace Server
                     // HANDLE QUIT REQUEST
                     if (Data == "<JRQ><EOT>")
                     {
-                        Console.WriteLine($"Accepted join request from {handle.RemoteEndPoint.ToString()}");
-                        Console.WriteLine($"Adding {handle.RemoteEndPoint.ToString()}");
+                        Console.WriteLine($"{handle.RemoteEndPoint.ToString()} joined.");
                         ConnectedUsers.Add(new User(handle.RemoteEndPoint));
+                        s.Send(Encoding.ASCII.GetBytes("<JRA><EOT>"));
+                        SendMessage($"{handle.RemoteEndPoint.ToString()} joined.", new User(handle.RemoteEndPoint));
                     }
+                    // QUIT REQUEST PENDING
                     else if (Data == "<QRP><EOT>")
                     {
-                        Console.WriteLine($"Accepted quit request from {handle.RemoteEndPoint.ToString()}");
-                        Console.WriteLine($"Deleting {handle.RemoteEndPoint.ToString()} from IP List.");
-                        //ConnectedUsers.Remove(ConnectedUsers.Find(x => x.EP.ToString() == x.));
+                        Console.WriteLine($"{handle.RemoteEndPoint} quit.<EOT>");
+                        ConnectedUsers.Remove(ConnectedUsers.Find(x => x.EP.ToString() == handle.RemoteEndPoint.ToString()));
+                        SendMessage($"{handle.RemoteEndPoint} quit.<EOT>", new User(handle.RemoteEndPoint));
                     }
+                    // NAME CHANGE REQUEST
                     else if (Data.StartsWith("<NCR>"))
                     {
-
+                        
                     }
                     else
                     {
-
+                        
                         // Echo message back
                         Console.WriteLine($"Echoing\n{handle.RemoteEndPoint.ToString()}:{ Data.Substring(0, Data.Length - 5)}");
                         byte[] msg = Encoding.ASCII.GetBytes($"{handle.RemoteEndPoint.ToString()}:{Data.Substring(0,Data.Length - 5)}");
@@ -99,6 +104,19 @@ namespace Server
 
                     Console.WriteLine("Quitting...");
                     break;
+                }
+            }
+        }
+
+        public void SendMessage(string message, User except)
+        {
+            Socket socket = new Socket(Addr.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            foreach(User user in ConnectedUsers)
+            {
+                if (except != user)
+                {
+                    socket.Connect(user.EP);
+                    socket.Send(Encoding.ASCII.GetBytes(message));
                 }
             }
         }
