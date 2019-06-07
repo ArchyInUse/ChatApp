@@ -11,7 +11,7 @@ namespace Client
     {
         public IPAddress LocalAddr;
         public IPAddress addr { get; set; } = IPAddress.Parse("89.139.220.217");
-        private int ListenPort = 61000;
+        private int ListenPort = 20000;
 
         public ClientWrapper()
         {

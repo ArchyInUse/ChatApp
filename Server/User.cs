@@ -10,10 +10,10 @@ namespace Server
     /// </summary>
     class User
     {
-        public EndPoint EP { get; }
+        public IPEndPoint EP { get; }
         public string Name { get; }
 
-        public User(EndPoint ep, string name = null)
+        public User(IPEndPoint ep, string name = null)
         {
             EP = ep;
             Name = name;
@@ -30,9 +30,9 @@ namespace Server
         }
 
         // Check if the user has the same endpoint as the one given (meaning it's the user)
-        public static bool operator==(User user, EndPoint ep)
+        public static bool operator==(User user, IPEndPoint ep)
         {
-            if (user.EP.ToString() == ep.ToString())
+            if (user.EP.Address.ToString() == ep.Address.ToString())
             {
                 return true;
             }
@@ -48,7 +48,7 @@ namespace Server
             return false;
         }
 
-        public static bool operator !=(User user, EndPoint ep)
+        public static bool operator !=(User user, IPEndPoint ep)
         {
             if (user.EP.ToString() != ep.ToString())
             {

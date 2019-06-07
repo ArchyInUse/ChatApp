@@ -12,7 +12,7 @@ namespace Server
     /// </summary>
     class ServerWrapper
     {
-        public const int SEND_PORT = 61000;
+        public const int SEND_PORT = 20000;
         public const int REC_PORT = 60000;
         public const string LISTEN_IP = "10.100.102.8";
 
@@ -67,16 +67,16 @@ namespace Server
                     if (Data == "<JRQ><EOT>")
                     {
                         Console.WriteLine($"{handle.RemoteEndPoint.ToString()} joined.");
-                        ConnectedUsers.Add(new User(handle.RemoteEndPoint));
+                        ConnectedUsers.Add(new User(handle.RemoteEndPoint as IPEndPoint));
                         handle.Send(Encoding.ASCII.GetBytes("<JRA><EOT>"));
-                        SendMessage($"{handle.RemoteEndPoint.ToString()} joined.", handle.RemoteEndPoint);
+                        SendMessage($"{handle.RemoteEndPoint.ToString()} joined.", handle.RemoteEndPoint as IPEndPoint);
                     }
                     // QUIT REQUEST PENDING
                     else if (Data == "<QRP><EOT>")
                     {
                         Console.WriteLine($"{handle.RemoteEndPoint} quit.<EOT>");
-                        ConnectedUsers.Remove(ConnectedUsers.Find(x => x == handle.RemoteEndPoint));
-                        SendMessage($"{handle.RemoteEndPoint} quit.<EOT>", handle.RemoteEndPoint);
+                        ConnectedUsers.Remove(ConnectedUsers.Find(x => x == handle.RemoteEndPoint as IPEndPoint));
+                        SendMessage($"{handle.RemoteEndPoint} quit.<EOT>", handle.RemoteEndPoint as IPEndPoint);
                     }
                     // NAME CHANGE REQUEST
                     else if (Data.StartsWith("<NCR>"))
@@ -88,8 +88,7 @@ namespace Server
                         
                         // Echo message back
                         Console.WriteLine($"Echoing\n{handle.RemoteEndPoint.ToString()}:{ Data.Substring(0, Data.Length - 5)}");
-                        byte[] msg = Encoding.ASCII.GetBytes($"{handle.RemoteEndPoint.ToString()}:{Data.Substring(0,Data.Length - 5)}");
-                        handle.Send(msg);
+                        SendMessage($"{handle.RemoteEndPoint.ToString()}:{ Data.Substring(0, Data.Length - 5)}", handle.RemoteEndPoint as IPEndPoint);
                     }
                     // Shut down socket
                     handle.Shutdown(SocketShutdown.Both);
@@ -107,14 +106,15 @@ namespace Server
             }
         }
 
-        public void SendMessage(string message, EndPoint except)
+        public void SendMessage(string message, IPEndPoint except)
         {
             Socket socket = new Socket(Addr.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             foreach(User user in ConnectedUsers)
             {
+                IPEndPoint CustomEndPoint = new IPEndPoint(user.EP.Address, SEND_PORT);
                 //if (user != except)
                 //{
-                    socket.Connect(user.EP);
+                    socket.Connect(CustomEndPoint);
                     socket.Send(Encoding.ASCII.GetBytes(message));
                 //}
             }
