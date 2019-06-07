@@ -19,6 +19,7 @@ namespace Server
             Name = name;
         }
 
+        // Check if user is the same as another user
         public static bool operator==(User user1, User user2)
         {
             if(user1.EP.ToString() == user2.EP.ToString())
@@ -28,9 +29,28 @@ namespace Server
             return false;
         }
 
+        // Check if the user has the same endpoint as the one given (meaning it's the user)
+        public static bool operator==(User user, EndPoint ep)
+        {
+            if (user.EP.ToString() == ep.ToString())
+            {
+                return true;
+            }
+            return false;
+        }
+         
         public static bool operator !=(User user1, User user2)
         {
             if (user1.EP.ToString() != user2.EP.ToString())
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public static bool operator !=(User user, EndPoint ep)
+        {
+            if (user.EP.ToString() != ep.ToString())
             {
                 return true;
             }

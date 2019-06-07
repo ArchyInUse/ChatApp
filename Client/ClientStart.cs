@@ -9,7 +9,9 @@ namespace Client
     {
         static void Main(string[] args)
         {
-
+            ClientWrapper client = new ClientWrapper();
+            
+            
         }
     }
 }

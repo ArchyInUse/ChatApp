@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Text;
 using System.Net;
 using System.Net.Sockets;
@@ -8,16 +9,36 @@ namespace Client
 {
     class ClientWrapper
     {
+        public IPAddress LocalAddr;
         public IPAddress addr { get; set; } = IPAddress.Parse("89.139.220.217");
+        private int ListenPort = 61000;
+
         public ClientWrapper()
         {
+            FirstConnect();
+            LocalAddr = GetLocalIp();
 
+            Thread ListenThread = new Thread(() => Listen());
+            Connect();
+        }
+
+        private IPAddress GetLocalIp()
+        {
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+
+            foreach(var ip in host.AddressList)
+            {
+                if(ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    return ip;
+                }
+            }
+            return null;
         }
         
         public void Connect()
         {
             int port = 60000;
-            IPAddress addr = IPAddress.Parse("89.139.220.217");
 
             byte[] Bytes = new byte[1024];
 
@@ -107,6 +128,36 @@ namespace Client
                 Console.WriteLine("Press any key...");
                 Console.ReadLine();
                 Environment.Exit(1);
+            }
+        }
+
+        private void Listen()
+        {
+            while(true)
+            {
+                Socket socket = new Socket(addr.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+
+                socket.Bind(new IPEndPoint(LocalAddr, ListenPort));
+                socket.Listen(1);
+
+                Socket handle = socket.Accept();
+                socket.Close();
+
+                string Data = string.Empty;
+                byte[] buffer = new byte[1024];
+
+                while (true)
+                {
+                    int bytesRec = handle.Receive(buffer);
+                    Data += Encoding.ASCII.GetString(buffer, 0, bytesRec);
+                    if (Data.IndexOf("<EOT>") > -1)
+                        break;
+                }
+
+                Console.WriteLine(Data.Substring(0, Data.Length - 5));
+
+                handle.Shutdown(SocketShutdown.Both);
+                handle.Close();
             }
         }
     }

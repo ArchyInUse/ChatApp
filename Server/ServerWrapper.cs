@@ -60,7 +60,6 @@ namespace Server
                         if (Data.IndexOf("<EOT>") > -1)
                             break;
                     }
-                    s.Close();
 
                     Console.WriteLine($"Text recieved {Data}");
 
@@ -69,15 +68,15 @@ namespace Server
                     {
                         Console.WriteLine($"{handle.RemoteEndPoint.ToString()} joined.");
                         ConnectedUsers.Add(new User(handle.RemoteEndPoint));
-                        s.Send(Encoding.ASCII.GetBytes("<JRA><EOT>"));
-                        SendMessage($"{handle.RemoteEndPoint.ToString()} joined.", new User(handle.RemoteEndPoint));
+                        handle.Send(Encoding.ASCII.GetBytes("<JRA><EOT>"));
+                        SendMessage($"{handle.RemoteEndPoint.ToString()} joined.", handle.RemoteEndPoint);
                     }
                     // QUIT REQUEST PENDING
                     else if (Data == "<QRP><EOT>")
                     {
                         Console.WriteLine($"{handle.RemoteEndPoint} quit.<EOT>");
-                        ConnectedUsers.Remove(ConnectedUsers.Find(x => x.EP.ToString() == handle.RemoteEndPoint.ToString()));
-                        SendMessage($"{handle.RemoteEndPoint} quit.<EOT>", new User(handle.RemoteEndPoint));
+                        ConnectedUsers.Remove(ConnectedUsers.Find(x => x == handle.RemoteEndPoint));
+                        SendMessage($"{handle.RemoteEndPoint} quit.<EOT>", handle.RemoteEndPoint);
                     }
                     // NAME CHANGE REQUEST
                     else if (Data.StartsWith("<NCR>"))
@@ -108,16 +107,16 @@ namespace Server
             }
         }
 
-        public void SendMessage(string message, User except)
+        public void SendMessage(string message, EndPoint except)
         {
             Socket socket = new Socket(Addr.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             foreach(User user in ConnectedUsers)
             {
-                if (except != user)
-                {
+                //if (user != except)
+                //{
                     socket.Connect(user.EP);
                     socket.Send(Encoding.ASCII.GetBytes(message));
-                }
+                //}
             }
         }
     }
