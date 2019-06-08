@@ -41,8 +41,8 @@ namespace Server
             while (true) {
                 Socket s = new Socket(Addr.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
-                //try
-                //{
+                try
+                {
                     s.Bind(EP);
                     s.Listen(10);
 
@@ -67,16 +67,24 @@ namespace Server
                     if (Data == "<JRQ><EOT>")
                     {
                         Console.WriteLine($"{handle.RemoteEndPoint.ToString()} joined.");
-                        ConnectedUsers.Add(new User(handle.RemoteEndPoint as IPEndPoint));
+                        User user = new User(handle.RemoteEndPoint as IPEndPoint);
+                        ConnectedUsers.Add(user);
                         handle.Send(Encoding.ASCII.GetBytes("<JRA><EOT>"));
-                        SendMessage($"{handle.RemoteEndPoint.ToString()} joined.", handle.RemoteEndPoint as IPEndPoint);
+                        // Shut down socket
+                        handle.Shutdown(SocketShutdown.Both);
+                        handle.Close();
+                        SendMessage($"{user.EP.Address.ToString()} joined.", user.EP);
                     }
                     // QUIT REQUEST PENDING
                     else if (Data == "<QRP><EOT>")
                     {
                         Console.WriteLine($"{handle.RemoteEndPoint} quit.<EOT>");
-                        ConnectedUsers.Remove(ConnectedUsers.Find(x => x == handle.RemoteEndPoint as IPEndPoint));
-                        SendMessage($"{handle.RemoteEndPoint} quit.<EOT>", handle.RemoteEndPoint as IPEndPoint);
+                        User user = ConnectedUsers.Find(x => x == handle.RemoteEndPoint as IPEndPoint);
+                        ConnectedUsers.Remove(user);
+                        // Shut down socket
+                        handle.Shutdown(SocketShutdown.Both);
+                        handle.Close();
+                        SendMessage($"{user.EP.Address.ToString()} quit.<EOT>", user.EP as IPEndPoint);
                     }
                     // NAME CHANGE REQUEST
                     else if (Data.StartsWith("<NCR>"))
@@ -88,21 +96,22 @@ namespace Server
                         
                         // Echo message back
                         Console.WriteLine($"Echoing\n{handle.RemoteEndPoint.ToString()}:{ Data.Substring(0, Data.Length - 5)}");
-                        SendMessage($"{handle.RemoteEndPoint.ToString()}:{ Data.Substring(0, Data.Length - 5)}", handle.RemoteEndPoint as IPEndPoint);
+                        string msg = $"{handle.RemoteEndPoint.ToString()}:{ Data.Substring(0, Data.Length - 5)}";
+                        IPEndPoint SenderEP = handle.RemoteEndPoint as IPEndPoint;
+                        // Shut down socket
+                        handle.Shutdown(SocketShutdown.Both);
+                        handle.Close();
                     }
-                    // Shut down socket
-                    handle.Shutdown(SocketShutdown.Both);
-                    handle.Close();
-                //}
-                //catch (Exception e)
-                //{
-                //    Console.ForegroundColor = ConsoleColor.Red;
-                //    Console.WriteLine(e.Message);
-                //    Console.ResetColor();
-                //
-                //    Console.WriteLine("Quitting...");
-                //    break;
-                //}
+                }
+                catch (Exception e)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(e.Message);
+                    Console.ResetColor();
+                
+                    Console.WriteLine("Quitting...");
+                    break;
+                }
             }
         }
 

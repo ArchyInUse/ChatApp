@@ -67,6 +67,8 @@ namespace Client
                             Console.WriteLine("Accepted quit request");
                             Console.WriteLine("---------------------");
                             Console.ResetColor();
+                            s.Shutdown(SocketShutdown.Both);
+                            s.Close();
                             break;
                         }
 
@@ -121,6 +123,7 @@ namespace Client
                 {
                     Console.WriteLine("Unsuccessful connection");
                 }
+                s.Close();
             }
             catch(Exception e)
             {
@@ -135,7 +138,7 @@ namespace Client
         {
             while (true)
             {
-                Socket socket = new Socket(addr.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                Socket socket = new Socket(LocalAddr.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                 socket.Bind(new IPEndPoint(LocalAddr, ListenPort));
                 socket.Listen(100);
 
