@@ -9,7 +9,7 @@ namespace Client
     class ClientWrapper
     {
         public Socket _socket { get; }
-        public IPEndPoint _ipEp { get; } = new IPEndPoint(IPAddress.Parse("89.139.220.217"), 60000);
+        public IPEndPoint _ipEp { get; } = new IPEndPoint(IPAddress.Parse("xxx.xxx.xxx.xxx"), 60000);
         public byte[] _dataBuffer { get; } = new byte[1024];
 
         public ClientWrapper()

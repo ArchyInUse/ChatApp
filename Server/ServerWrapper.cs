@@ -10,7 +10,7 @@ namespace Server
     class ServerWrapper
     {
         public const int Port = 60000;
-        public const string LISTEN_IP = "10.100.102.8";
+        public const string LISTEN_IP = "xxx.xxx.xxx.xxx";
         public Socket _mainSocket;
 
         private IPAddress Addr = IPAddress.Parse(LISTEN_IP);
