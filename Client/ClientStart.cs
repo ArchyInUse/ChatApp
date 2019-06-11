@@ -11,7 +11,10 @@ namespace Client
         {
             ClientWrapper client = new ClientWrapper();
             
-            
+            while(true)
+            {
+
+            }
         }
     }
 }

@@ -53,6 +53,10 @@ namespace Server
                 _socket.EndSend(ar);
                 Console.WriteLine($"Sent message to {_socket.RemoteEndPoint}");
             }
+            catch(SocketException)
+            {
+                Disconnect();
+            }
         }
 
         public void ListenForData()
@@ -75,9 +79,13 @@ namespace Server
 
                 var MessageLength = _socket.EndReceive(ar);
 
+                string strdata = Encoding.ASCII.GetString(Data, 0, Data.Length);
+
+                string sorteddata = $"{_socket.RemoteEndPoint}: {strdata}";
+
                 if (MessageLength == 0) Disconnect();
 
-                _wrapper.Log(Data);
+                _wrapper.Log(Encoding.ASCII.GetBytes(sorteddata));
 
                 ListenForData();
             }

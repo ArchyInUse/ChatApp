@@ -9,7 +9,7 @@ namespace Client
     class ClientWrapper
     {
         public Socket _socket { get; }
-        public IPEndPoint _ipEp { get; } = new IPEndPoint(IPAddress.Parse("xxx.xxx.xxx.xxx"), 60000);
+        public IPEndPoint _ipEp { get; } = new IPEndPoint(IPAddress.Parse("89.139.220.217"), 60000);
         public byte[] _dataBuffer { get; } = new byte[1024];
 
         public ClientWrapper()
@@ -18,7 +18,7 @@ namespace Client
             _socket.Connect(_ipEp);
 
             Send();
-
+            Listen();
         }
 
         // Fire and forget implementation
@@ -33,8 +33,10 @@ namespace Client
                 Console.WriteLine("-BeginSend-");
                 _socket.BeginSend(msgBytes, 0, msgBytes.Length, SocketFlags.None, OnSendComplete, null);
             }
-            catch(SocketException)
+            catch(SocketException e)
             {
+                Console.WriteLine(e);
+                Console.ReadLine();
                 Disconnect();
             }
         }
@@ -50,7 +52,9 @@ namespace Client
         {
             try
             {
+                Console.WriteLine("Begun Recieve");
                 _socket.BeginReceive(_dataBuffer, 0, _dataBuffer.Length, SocketFlags.None, OnMessageRecieved, null);
+                Console.WriteLine("After begun");
             }
             catch(SocketException)
             {
