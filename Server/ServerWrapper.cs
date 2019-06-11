@@ -45,9 +45,22 @@ namespace Server
         {
             foreach(User u in ConnectedUsers)
             {
-                Console.WriteLine($"Sending {u._socket.RemoteEndPoint} - {Encoding.ASCII.GetString(bytes)}");
+                Console.WriteLine($"Sending {u._socket.RemoteEndPoint} - {SortMessageToOneLine(Encoding.ASCII.GetString(bytes))}");
                 u.Send(bytes);
             }
+        }
+
+        public string SortMessageToOneLine(string s)
+        {
+            for (int i = s.Length; i < 0; i--)
+            {
+                if (s[i] != ' ')
+                {
+                    return s.Substring(0, i);
+                }
+            }
+
+            return s;
         }
     }
 }

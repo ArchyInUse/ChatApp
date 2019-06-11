@@ -24,13 +24,11 @@ namespace Client
         // Fire and forget implementation
         public void Send()
         {
-            Console.WriteLine("-Send message call-");
             string msg = Console.ReadLine();
             byte[] msgBytes = Encoding.ASCII.GetBytes(msg);
 
             try
             {
-                Console.WriteLine("-BeginSend-");
                 _socket.BeginSend(msgBytes, 0, msgBytes.Length, SocketFlags.None, OnSendComplete, null);
             }
             catch(SocketException e)
@@ -43,8 +41,6 @@ namespace Client
 
         public void OnSendComplete(IAsyncResult ar)
         {
-            Console.WriteLine("-Done sending-");
-
             Send();
         }
 
@@ -52,9 +48,7 @@ namespace Client
         {
             try
             {
-                Console.WriteLine("Begun Recieve");
                 _socket.BeginReceive(_dataBuffer, 0, _dataBuffer.Length, SocketFlags.None, OnMessageRecieved, null);
-                Console.WriteLine("After begun");
             }
             catch(SocketException)
             {
@@ -64,10 +58,11 @@ namespace Client
 
         public void OnMessageRecieved(IAsyncResult ar)
         {
-            Console.WriteLine($"Recieved message");
             int bytesrec = _socket.EndReceive(ar);
 
             string msg = Encoding.ASCII.GetString(_dataBuffer, 0, bytesrec);
+
+            msg = SortMessageToOneLine(msg);
 
             Console.WriteLine(msg);
 
@@ -87,6 +82,19 @@ namespace Client
             {
                 Console.WriteLine("Server already disconnected.");
             }
+        }
+
+        public string SortMessageToOneLine(string s)
+        {
+            for(int i = s.Length; i < 0; i--)
+            {
+                if (s[i] != ' ')
+                {
+                    return s.Substring(0, i);
+                }
+            }
+
+            return s;
         }
     }
 }
