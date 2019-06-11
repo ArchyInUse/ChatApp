@@ -10,7 +10,7 @@ namespace Server
     class ServerWrapper
     {
         public const int Port = 60000;
-        public const string LISTEN_IP = "xxx.xxx.xxx.xxx";
+        public const string LISTEN_IP = "10.100.102.8";
         public Socket _mainSocket;
 
         private IPAddress Addr = IPAddress.Parse(LISTEN_IP);
@@ -43,24 +43,22 @@ namespace Server
 
         public async Task Log(byte[] bytes)
         {
-            foreach(User u in ConnectedUsers)
+            Console.WriteLine("removing white spaces");
+            string msg = RemoveWhiteSpace(bytes);
+            foreach (User u in ConnectedUsers)
             {
-                Console.WriteLine($"Sending {u._socket.RemoteEndPoint} - {SortMessageToOneLine(Encoding.ASCII.GetString(bytes))}");
+                Console.WriteLine($"Sending {u._socket.RemoteEndPoint}:{msg}");
                 u.Send(bytes);
             }
         }
 
-        public string SortMessageToOneLine(string s)
+        public string RemoveWhiteSpace(byte[] arr)
         {
-            for (int i = s.Length; i < 0; i--)
-            {
-                if (s[i] != ' ')
-                {
-                    return s.Substring(0, i);
-                }
-            }
+            int b = Array.FindLastIndex(arr, arr.Length - 1, x => x != 0);
 
-            return s;
+            Array.Resize(ref arr, b + 1);
+
+            return Encoding.ASCII.GetString(arr);
         }
     }
 }

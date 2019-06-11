@@ -9,8 +9,8 @@ namespace Client
     class ClientWrapper
     {
         public Socket _socket { get; }
-        public IPEndPoint _ipEp { get; } = new IPEndPoint(IPAddress.Parse("xxx.xxx.xxx.xxx"), 60000);
-        public byte[] _dataBuffer { get; } = new byte[1024];
+        public IPEndPoint _ipEp { get; } = new IPEndPoint(IPAddress.Parse("89.139.220.217"), 60000);
+        public byte[] _dataBuffer { get; set; } = new byte[1024];
 
         public ClientWrapper()
         {
@@ -62,10 +62,11 @@ namespace Client
 
             string msg = Encoding.ASCII.GetString(_dataBuffer, 0, bytesrec);
 
-            msg = SortMessageToOneLine(msg);
+            msg = RemoveWhiteSpace(_dataBuffer);
 
             Console.WriteLine(msg);
 
+            _dataBuffer = new byte[1024];
             Listen();
         }
 
@@ -84,17 +85,13 @@ namespace Client
             }
         }
 
-        public string SortMessageToOneLine(string s)
+        public string RemoveWhiteSpace(byte[] arr)
         {
-            for(int i = s.Length; i < 0; i--)
-            {
-                if (s[i] != ' ')
-                {
-                    return s.Substring(0, i);
-                }
-            }
+            int b = Array.FindLastIndex(arr, arr.Length - 1, x => x != 0);
 
-            return s;
+            Array.Resize(ref arr, b + 1);
+
+            return Encoding.ASCII.GetString(arr);
         }
     }
 }
