@@ -14,13 +14,11 @@ namespace Server
         public byte[] Data { get; } = new byte[1024];
         public Socket _socket;
         public string Name;
-        public ServerWrapper _wrapper { get; }
 
-        public User(Socket s, ServerWrapper sw, string name = null)
+        public User(Socket s, string name = null)
         {
             _socket = s;
-            _wrapper = sw;
-            Name = name;
+            Name = s.RemoteEndPoint.ToString().Substring(0, s.RemoteEndPoint.ToString().Length - 6);
 
             ListenForData();
         }
@@ -51,7 +49,6 @@ namespace Server
             try
             {
                 _socket.EndSend(ar);
-                Console.WriteLine($"Sent message to {_socket.RemoteEndPoint}");
             }
             catch(SocketException)
             {
@@ -81,11 +78,13 @@ namespace Server
 
                 string strdata = Encoding.ASCII.GetString(Data, 0, Data.Length);
 
-                string sorteddata = $"{_socket.RemoteEndPoint}: {strdata}";
+                string sorteddata = $"{Name}: {strdata}";
 
                 if (MessageLength == 0) Disconnect();
 
-                _wrapper.Log(Encoding.ASCII.GetBytes(sorteddata));
+                Console.WriteLine(Encoding.ASCII.GetBytes(sorteddata));
+
+                ServerWrapper.Log(Encoding.ASCII.GetBytes(sorteddata));
 
                 ListenForData();
             }
@@ -101,10 +100,31 @@ namespace Server
 
             Console.WriteLine($"Disconnecting {_socket.RemoteEndPoint}");
 
+            ServerWrapper.Log(Encoding.ASCII.GetBytes($"{_socket.RemoteEndPoint} disconnected."));
+
             _socket.Shutdown(SocketShutdown.Both);
             _socket.Close();
 
 
+        }
+
+        public void Parse(string str)
+        { 
+            if(str.StartsWith("/nick "))
+            {
+                ServerWrapper.Log($"{Name} has changed their name to {str.Substring(6)}");
+                Name = str.Substring(6);
+            }
+            else if(str.Trim() == "/disconnect")
+            {
+                ServerWrapper.Log($"{_socket.RemoteEndPoint} has disconnected.");
+                Disconnect();
+                ServerWrapper.ConnectedUsers.Remove(this);
+            }
+            else
+            {
+                ServerWrapper.Log(str)
+            }
         }
     }
 }

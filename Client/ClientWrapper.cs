@@ -41,6 +41,7 @@ namespace Client
 
         public void OnSendComplete(IAsyncResult ar)
         {
+            _socket.EndSend(ar);
             Send();
         }
 

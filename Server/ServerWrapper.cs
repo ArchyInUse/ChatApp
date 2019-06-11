@@ -14,7 +14,7 @@ namespace Server
         public Socket _mainSocket;
 
         private IPAddress Addr = IPAddress.Parse(LISTEN_IP);
-        private List<User> ConnectedUsers { get; }
+        public static List<User> ConnectedUsers { get; set; }
 
         public ServerWrapper()
         {
@@ -35,24 +35,24 @@ namespace Server
         {
             var socket = _mainSocket.EndAccept(asyncResult);
 
-            Console.WriteLine($"Acceted connection from {socket.RemoteEndPoint}");
-            ConnectedUsers.Add(new User(socket, this));
+            Console.WriteLine($"Client connected: {socket.RemoteEndPoint}");
+            ConnectedUsers.Add(new User(socket));
 
             _mainSocket.BeginAccept(OnClientConnect, null);
         }
 
-        public async Task Log(byte[] bytes)
+        public static async Task Log(byte[] bytes)
         {
-            Console.WriteLine("removing white spaces");
             string msg = RemoveWhiteSpace(bytes);
             foreach (User u in ConnectedUsers)
             {
-                Console.WriteLine($"Sending {u._socket.RemoteEndPoint}:{msg}");
-                u.Send(bytes);
+                u.Parse(msg);
             }
         }
 
-        public string RemoveWhiteSpace(byte[] arr)
+        public static async Task Log(string msg) => Log(Encoding.ASCII.GetBytes(msg));
+
+        public static string RemoveWhiteSpace(byte[] arr)
         {
             int b = Array.FindLastIndex(arr, arr.Length - 1, x => x != 0);
 
