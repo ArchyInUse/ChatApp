@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Text;
 using System.Net;
 using System.Net.Sockets;
@@ -9,158 +8,80 @@ namespace Client
 {
     class ClientWrapper
     {
-        public IPAddress LocalAddr;
-        public IPAddress addr { get; set; } = IPAddress.Parse("89.139.220.217");
-        private int ListenPort = 20000;
+        public Socket _socket { get; }
+        public IPEndPoint _ipEp { get; } = new IPEndPoint(IPAddress.Parse("xxx.xxx.xxx.xxx"), 60000);
+        public byte[] _dataBuffer { get; } = new byte[1024];
 
         public ClientWrapper()
         {
-            FirstConnect();
-            LocalAddr = GetLocalIp();
+            _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            _socket.Connect(_ipEp);
 
-            Thread ListenThread = new Thread(() => Listen());
-            Connect();
+            Send();
+
         }
 
-        private IPAddress GetLocalIp()
+        // Fire and forget implementation
+        public void Send()
         {
-            var host = Dns.GetHostEntry(Dns.GetHostName());
+            Console.WriteLine("-Send message call-");
+            string msg = Console.ReadLine();
+            byte[] msgBytes = Encoding.ASCII.GetBytes(msg);
 
-            foreach(var ip in host.AddressList)
+            try
             {
-                if(ip.AddressFamily == AddressFamily.InterNetwork)
-                {
-                    return ip;
-                }
+                Console.WriteLine("-BeginSend-");
+                _socket.BeginSend(msgBytes, 0, msgBytes.Length, SocketFlags.None, OnSendComplete, null);
             }
-            return null;
+            catch(SocketException)
+            {
+                Disconnect();
+            }
         }
-        
-        public void Connect()
+
+        public void OnSendComplete(IAsyncResult ar)
         {
-            int port = 60000;
+            Console.WriteLine("-Done sending-");
 
-            byte[] Bytes = new byte[1024];
-
-            while (true)
-            {
-                try
-                {
-                    Socket s = new Socket(addr.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                    string msg = Console.ReadLine() + "<EOT>";
-                    s.Connect(new IPEndPoint(addr, port));
-
-                    if (msg == "//Quit<EOT>")
-                    {
-                        // quit request pending
-                        byte[] EncodedQuit = Encoding.ASCII.GetBytes("<QRP><EOT>");
-                        Bytes = new byte[1024];
-                        Console.WriteLine("Finished preparation for socket variables and data buffer.");
-                        s.Send(EncodedQuit);
-                        Console.WriteLine("Sent data...");
-                        int BytesRec = s.Receive(Bytes);
-                        // accepted quit reqest
-                        if (Encoding.ASCII.GetString(Bytes, 0, BytesRec) == "<AQR>")
-                        {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("---------------------");
-                            Console.WriteLine("Accepted quit request");
-                            Console.WriteLine("---------------------");
-                            Console.ResetColor();
-                            s.Shutdown(SocketShutdown.Both);
-                            s.Close();
-                            break;
-                        }
-
-                        s.Shutdown(SocketShutdown.Both);
-                        s.Close();
-                    }
-                    else
-                    {
-
-                        Console.WriteLine($"Socket connected to {s.RemoteEndPoint.ToString()}");
-
-                        byte[] EncodedMsg = Encoding.ASCII.GetBytes(msg);
-                        int bytesSent = s.Send(EncodedMsg);
-                        int bytesRec = s.Receive(Bytes);
-                        Console.WriteLine($"{Encoding.ASCII.GetString(Bytes, 0, bytesRec)}");
-
-                        s.Shutdown(SocketShutdown.Both);
-                        s.Close();
-                    }
-                }
-                catch (Exception e)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine(e.Message);
-                    Console.ResetColor();
-
-                    Console.WriteLine("Resetting...");
-                }
-            }
-
-            Console.WriteLine("Press any key to continue...");
-            Console.ReadKey();
+            Send();
         }
 
-        private void FirstConnect()
+        public void Listen()
         {
             try
             {
-                byte[] RecBuffer = new byte[1024];
-                Socket s = new Socket(addr.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                s.Connect(new IPEndPoint(addr, 60000));
-
-                s.Send(Encoding.ASCII.GetBytes("<JRQ><EOT>"));
-                var bytesrecieved = s.Receive(RecBuffer);
-
-                // Join request accepted
-                if (Encoding.ASCII.GetString(RecBuffer, 0, bytesrecieved) == "<JRA><EOT>")
-                {
-                    Console.WriteLine($"Connected successfully ({Encoding.ASCII.GetString(RecBuffer, 0, bytesrecieved)})");
-                }
-                else
-                {
-                    Console.WriteLine("Unsuccessful connection");
-                }
-                s.Close();
+                _socket.BeginReceive(_dataBuffer, 0, _dataBuffer.Length, SocketFlags.None, OnMessageRecieved, null);
             }
-            catch(Exception e)
+            catch(SocketException)
             {
-                Console.WriteLine($"Connection failed : {e}");
-                Console.WriteLine("Press any key...");
-                Console.ReadLine();
-                Environment.Exit(1);
+                Disconnect();
             }
         }
 
-        private void Listen()
+        public void OnMessageRecieved(IAsyncResult ar)
         {
-            while (true)
+            Console.WriteLine($"Recieved message");
+            int bytesrec = _socket.EndReceive(ar);
+
+            string msg = Encoding.ASCII.GetString(_dataBuffer, 0, bytesrec);
+
+            Console.WriteLine(msg);
+
+            Listen();
+        }
+
+        public void Disconnect()
+        {
+            Console.WriteLine($"Disconnect call recieved.");
+            if (_socket.Connected)
             {
-                Socket socket = new Socket(LocalAddr.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                socket.Bind(new IPEndPoint(LocalAddr, ListenPort));
-                socket.Listen(100);
-
-                Socket handle = socket.Accept();
-
-                string Data = string.Empty;
-                byte[] buffer = new byte[1024];
-
-                while (true)
-                {
-                    int bytesRec = handle.Receive(buffer);
-                    Data += Encoding.ASCII.GetString(buffer, 0, bytesRec);
-                    if (Data.IndexOf("<EOT>") > -1)
-                        break;
-                }
-
-                Console.WriteLine(Data.Substring(0, Data.Length - 5));
-
-                handle.Shutdown(SocketShutdown.Both);
-                handle.Close();
-                socket.Shutdown(SocketShutdown.Both);
-                socket.Close();
+                _socket.Shutdown(SocketShutdown.Both);
+                _socket.Close();
+                Console.WriteLine("Disconnected.");
+            }
+            else
+            {
+                Console.WriteLine("Server already disconnected.");
             }
         }
     }

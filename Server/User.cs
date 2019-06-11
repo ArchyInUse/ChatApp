@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using System.Net.Sockets;
 using System.Collections.Generic;
 using System.Text;
 
@@ -10,51 +11,92 @@ namespace Server
     /// </summary>
     class User
     {
-        public IPEndPoint EP { get; }
-        public string Name { get; }
+        public byte[] Data { get; } = new byte[1024];
+        public Socket _socket;
+        public string Name;
+        public ServerWrapper _wrapper { get; }
 
-        public User(IPEndPoint ep, string name = null)
+        public User(Socket s, ServerWrapper sw, string name = null)
         {
-            EP = ep;
+            _socket = s;
+            _wrapper = sw;
             Name = name;
+
+            ListenForData();
         }
 
-        // Check if user is the same as another user
-        public static bool operator==(User user1, User user2)
+        public void Send(string data)
         {
-            if(user1.EP.ToString() == user2.EP.ToString())
+            Send(Encoding.ASCII.GetBytes(data));
+        }
+        
+        public void Send(byte[] data)
+        {
+            try
             {
-                return true;
+                _socket.BeginSend(data, 0, data.Length, SocketFlags.None, OnSendComplete, null);
             }
-            return false;
+            catch(SocketException)
+            {
+                Disconnect();
+            }
+            catch(ObjectDisposedException)
+            {
+                Disconnect();
+            }
         }
 
-        // Check if the user has the same endpoint as the one given (meaning it's the user)
-        public static bool operator==(User user, IPEndPoint ep)
+        private void OnSendComplete(IAsyncResult ar)
         {
-            if (user.EP.Address.ToString() == ep.Address.ToString())
+            try
             {
-                return true;
+                _socket.EndSend(ar);
+                Console.WriteLine($"Sent message to {_socket.RemoteEndPoint}");
             }
-            return false;
-        }
-         
-        public static bool operator !=(User user1, User user2)
-        {
-            if (user1.EP.ToString() != user2.EP.ToString())
-            {
-                return true;
-            }
-            return false;
         }
 
-        public static bool operator !=(User user, IPEndPoint ep)
+        public void ListenForData()
         {
-            if (user.EP.ToString() != ep.ToString())
+            try
             {
-                return true;
+                _socket.BeginReceive(Data, 0, Data.Length, SocketFlags.None, OnDataRecieved, null);
             }
-            return false;
+            catch(SocketException)
+            {
+                Disconnect();
+            }
+        }
+
+        private void OnDataRecieved(IAsyncResult ar)
+        {
+            try
+            {
+                if (!_socket.Connected) return;
+
+                var MessageLength = _socket.EndReceive(ar);
+
+                if (MessageLength == 0) Disconnect();
+
+                _wrapper.Log(Data);
+
+                ListenForData();
+            }
+            catch(SocketException)
+            {
+                Disconnect();
+            }
+        }
+
+        public void Disconnect()
+        {
+            if (!_socket.Connected) return;
+
+            Console.WriteLine($"Disconnecting {_socket.RemoteEndPoint}");
+
+            _socket.Shutdown(SocketShutdown.Both);
+            _socket.Close();
+
+
         }
     }
 }

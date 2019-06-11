@@ -10,8 +10,6 @@ namespace Server
 
             ServerWrapper server = new ServerWrapper();
 
-            server.Start();
-
             Console.Read();
         }
     }
