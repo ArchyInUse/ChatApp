@@ -123,7 +123,7 @@ namespace Server
             }
             else
             {
-                ServerWrapper.Log(str)
+                ServerWrapper.Log(str);
             }
         }
     }
