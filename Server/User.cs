@@ -11,7 +11,7 @@ namespace Server
     /// </summary>
     class User
     {
-        public byte[] Data { get; } = new byte[1024];
+        public byte[] Data { get; set; } = new byte[1024];
         public Socket _socket;
         public string Name;
 
@@ -77,14 +77,13 @@ namespace Server
                 var MessageLength = _socket.EndReceive(ar);
 
                 string strdata = Encoding.ASCII.GetString(Data, 0, Data.Length);
+                Data = new byte[1024];
 
-                string sorteddata = $"{Name}: {strdata}";
+                string sorteddata = $"{Name}:{strdata}";
 
                 if (MessageLength == 0) Disconnect();
 
-                Console.WriteLine(Encoding.ASCII.GetBytes(sorteddata));
-
-                ServerWrapper.Log(Encoding.ASCII.GetBytes(sorteddata));
+                Parse(sorteddata);
 
                 ListenForData();
             }
@@ -109,21 +108,25 @@ namespace Server
         }
 
         public void Parse(string str)
-        { 
-            if(str.StartsWith("/nick "))
+        {
+            if (str.StartsWith($"{Name}:/nick "))
             {
-                ServerWrapper.Log($"{Name} has changed their name to {str.Substring(6)}");
-                Name = str.Substring(6);
+                str = ServerWrapper.RemoveWhiteSpace(Encoding.ASCII.GetBytes(str));
+                ServerWrapper.Log($"{Name} has changed their name to {str.Substring($"{Name}:/nick ".Length)}");
+                Console.WriteLine($"{Name} has changed their name to {str.Substring($"{Name}:/nick ".Length)}");
+                Name = str.Substring($"{Name}:/nick ".Length);
             }
             else if(str.Trim() == "/disconnect")
             {
-                ServerWrapper.Log($"{_socket.RemoteEndPoint} has disconnected.");
+                ServerWrapper.Log($"{Name} has disconnected.");
+                Console.WriteLine($"{Name} has disconnected.");
                 Disconnect();
                 ServerWrapper.ConnectedUsers.Remove(this);
             }
             else
             {
-                ServerWrapper.Log(str);
+                Console.WriteLine(ServerWrapper.RemoveWhiteSpace(Encoding.ASCII.GetBytes(str)));
+                ServerWrapper.Log(ServerWrapper.RemoveWhiteSpace(Encoding.ASCII.GetBytes(str)));
             }
         }
     }

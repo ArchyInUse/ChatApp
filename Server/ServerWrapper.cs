@@ -44,9 +44,9 @@ namespace Server
         public static async Task Log(byte[] bytes)
         {
             string msg = RemoveWhiteSpace(bytes);
-            foreach (User u in ConnectedUsers)
+            foreach(User u in ConnectedUsers)
             {
-                u.Parse(msg);
+                u.Send(msg);
             }
         }
 
