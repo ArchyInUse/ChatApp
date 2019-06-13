@@ -61,9 +61,7 @@ namespace Client
         {
             int bytesrec = _socket.EndReceive(ar);
 
-            string msg = Encoding.ASCII.GetString(_dataBuffer, 0, bytesrec);
-
-            msg = RemoveWhiteSpace(_dataBuffer);
+            string msg = RemoveWhiteSpace(_dataBuffer);
 
             Console.WriteLine(msg);
 

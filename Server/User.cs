@@ -18,15 +18,15 @@ namespace Server
         public User(Socket s, string name = null)
         {
             _socket = s;
-            Name = s.RemoteEndPoint.ToString().Substring(0, s.RemoteEndPoint.ToString().Length - 6);
+            if (name == null)
+                Name = s.RemoteEndPoint.ToString().Substring(0, s.RemoteEndPoint.ToString().Length - 6);
+            else
+                Name = name;
 
             ListenForData();
         }
 
-        public void Send(string data)
-        {
-            Send(Encoding.ASCII.GetBytes(data));
-        }
+        public void Send(string data) => Send(Encoding.ASCII.GetBytes(data));
         
         public void Send(byte[] data)
         {

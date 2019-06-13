@@ -12,8 +12,7 @@ namespace Server
         public const int Port = 60000;
         public const string LISTEN_IP = "10.100.102.8";
         public Socket _mainSocket;
-
-        private IPAddress Addr = IPAddress.Parse(LISTEN_IP);
+        
         public static List<User> ConnectedUsers { get; set; }
 
         public ServerWrapper()
@@ -25,9 +24,7 @@ namespace Server
             var localIp = new IPEndPoint(IPAddress.Any, Port);
 
             _mainSocket.Bind(localIp);
-
-            _mainSocket.Listen(10);
-
+            _mainSocket.Listen(100);
             _mainSocket.BeginAccept(OnClientConnect, null);
         }
 
@@ -35,7 +32,7 @@ namespace Server
         {
             var socket = _mainSocket.EndAccept(asyncResult);
 
-            Console.WriteLine($"Client connected: {socket.RemoteEndPoint}");
+            Console.WriteLine($"Client connected: {socket.RemoteEndPoint.ToString().Substring(0, socket.RemoteEndPoint.ToString().Length - 6)}");
             ConnectedUsers.Add(new User(socket));
 
             _mainSocket.BeginAccept(OnClientConnect, null);
